@@ -42,7 +42,64 @@ public class EventExamples {
 	 */
 	private static final String DIR_USERDATA = "/Users/seb/Downloads/All-Clean/";
 
-	
+	/**
+	 * 1: Find all users in the dataset.
+	 */
+	public static List<String> findAllUsers() {
+		// This step is straight forward, as events are grouped by user. Each
+		// .zip file in the dataset corresponds to one user.
+
+		List<String> zips = Lists.newLinkedList();
+		for (File f : FileUtils.listFiles(new File(DIR_USERDATA), new String[] { "zip" }, true)) {
+			zips.add(f.getAbsolutePath());
+		}
+		return zips;
+	}
+
+	/**
+	 * 2: Reading events
+	 */
+	public static void readAllEvents() {
+		// each .zip file corresponds to a user
+		List<String> userZips = findAllUsers();
+
+		for (String user : userZips) {
+			// you can use our helper to open a file...
+			ReadingArchive ra = new ReadingArchive(new File(user));
+			// ...iterate over it...
+			while (ra.hasNext()) {
+				// ... and desrialize the IDE event.
+				IIDEEvent e = ra.getNext(IIDEEvent.class);
+				// afterwards, you can process it as a Java object
+				process(e);
+			}
+			ra.close();
+		}
+	}
+
+	/**
+	 * 3: Reading the plain JSON representation
+	 */
+	public static void readPlainEvents() {
+		// the example is basically the same as before, but...
+		List<String> userZips = findAllUsers();
+
+		for (String user : userZips) {
+			ReadingArchive ra = new ReadingArchive(new File(user));
+			while (ra.hasNext()) {
+				// ... sometimes it is easier to just read the JSON...
+				String json = ra.getNextPlain();
+				// .. and call the deserializer yourself.
+				IIDEEvent e = JsonUtils.fromJson(json, IIDEEvent.class);
+				process(e);
+
+				// Not all event bindings are very stable already, reading the
+				// JSON helps debugging possible bugs in the bindings
+			}
+			ra.close();
+		}
+	}
+
 	/**
 	 * 4: Processing events
 	 */
@@ -61,4 +118,4 @@ public class EventExamples {
 			// website for the documentation of the semantics of each event...
 		}
 	}
-} 
+}
